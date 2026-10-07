@@ -1,0 +1,214 @@
+"""
+Self-hosted email open tracker.
+
+How it works:
+  1. Create a tracked email on the dashboard (recipient + subject).
+  2. You get a unique tracking-pixel image URL.
+  3. Insert that image URL into your Gmail compose window
+     (Insert photo -> Web address (URL) -> paste -> Insert).
+  4. When the recipient opens the mail, their mail app loads the image
+     and the open is logged with timestamp, IP and device info.
+
+Routes:
+  GET  /            dashboard (password protected, see DASHBOARD_PASSWORD)
+  GET  /new         form to create a tracked email
+  POST /new         creates it, shows the pixel snippet
+  POST /delete/<id> deletes a tracked email and its opens
+  GET  /p/<id>      the tracking pixel itself (PUBLIC - mail apps fetch this)
+  GET  /health      health check
+"""
+
+import base64
+import os
+import sqlite3
+import uuid
+from datetime import datetime, timezone
+from functools import wraps
+from zoneinfo import ZoneInfo
+
+from flask import Flask, Response, g, redirect, render_template, request, url_for
+
+app = Flask(__name__)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.environ.get("DB_PATH", os.path.join(BASE_DIR, "tracker.db"))
+ADMIN_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "")
+LOCAL_TZ = ZoneInfo("Asia/Kolkata")
+
+# 1x1 transparent PNG
+PIXEL_PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+)
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS emails (
+    id TEXT PRIMARY KEY,
+    recipient TEXT NOT NULL,
+    subject TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS opens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email_id TEXT NOT NULL,
+    opened_at TEXT NOT NULL,
+    ip TEXT DEFAULT '',
+    user_agent TEXT DEFAULT '',
+    FOREIGN KEY (email_id) REFERENCES emails(id) ON DELETE CASCADE
+);
+"""
+
+
+def get_db():
+    if "db" not in g:
+        g.db = sqlite3.connect(DB_PATH)
+        g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA foreign_keys = ON")
+    return g.db
+
+
+@app.teardown_appcontext
+def close_db(exc):
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
+
+
+def init_db():
+    db = sqlite3.connect(DB_PATH)
+    db.executescript(SCHEMA)
+    db.commit()
+    db.close()
+
+
+init_db()
+
+
+def check_auth():
+    if not ADMIN_PASSWORD:
+        return True
+    auth = request.authorization
+    return bool(auth and auth.password == ADMIN_PASSWORD)
+
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not check_auth():
+            return Response(
+                "Login required",
+                401,
+                {"WWW-Authenticate": 'Basic realm="mail-tracker"'},
+            )
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def fmt_time(iso):
+    if not iso:
+        return "—"
+    dt = datetime.fromisoformat(iso)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(LOCAL_TZ).strftime("%d %b %Y, %I:%M %p")
+
+
+@app.route("/")
+@requires_auth
+def dashboard():
+    db = get_db()
+    emails = db.execute("SELECT * FROM emails ORDER BY created_at DESC").fetchall()
+    rows = []
+    for e in emails:
+        stats = db.execute(
+            "SELECT COUNT(*) AS c, MIN(opened_at) AS first, MAX(opened_at) AS last"
+            " FROM opens WHERE email_id = ?",
+            (e["id"],),
+        ).fetchone()
+        rows.append(
+            {
+                "id": e["id"],
+                "recipient": e["recipient"],
+                "subject": e["subject"] or "—",
+                "created": fmt_time(e["created_at"]),
+                "opens": stats["c"],
+                "first": fmt_time(stats["first"]),
+                "last": fmt_time(stats["last"]),
+                "opened": stats["c"] > 0,
+                "pixel_url": url_for("pixel", tid=e["id"], _external=True),
+            }
+        )
+    return render_template("dashboard.html", rows=rows, no_auth=not ADMIN_PASSWORD)
+
+
+@app.route("/new", methods=["GET", "POST"])
+@requires_auth
+def new_email():
+    if request.method == "POST":
+        recipient = request.form.get("recipient", "").strip()
+        subject = request.form.get("subject", "").strip()
+        if not recipient:
+            return render_template("new.html", error="Recipient is required.")
+        tid = uuid.uuid4().hex
+        db = get_db()
+        db.execute(
+            "INSERT INTO emails (id, recipient, subject, created_at) VALUES (?, ?, ?, ?)",
+            (tid, recipient, subject, datetime.now(timezone.utc).isoformat()),
+        )
+        db.commit()
+        return render_template(
+            "snippet.html",
+            recipient=recipient,
+            subject=subject or "—",
+            pixel_url=url_for("pixel", tid=tid, _external=True),
+        )
+    return render_template("new.html")
+
+
+@app.route("/delete/<tid>", methods=["POST"])
+@requires_auth
+def delete_email(tid):
+    db = get_db()
+    db.execute("DELETE FROM emails WHERE id = ?", (tid,))
+    db.commit()
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/p/<path:tid>")
+def pixel(tid):
+    # Allow an optional .png suffix (some mail clients like image-looking URLs)
+    tid = tid[:-4] if tid.endswith(".png") else tid
+    try:
+        db = sqlite3.connect(DB_PATH)
+        row = db.execute("SELECT id FROM emails WHERE id = ?", (tid,)).fetchone()
+        if row:
+            fwd = request.headers.get("X-Forwarded-For", "")
+            ip = (fwd.split(",")[0].strip() if fwd else (request.remote_addr or ""))
+            db.execute(
+                "INSERT INTO opens (email_id, opened_at, ip, user_agent)"
+                " VALUES (?, ?, ?, ?)",
+                (
+                    tid,
+                    datetime.now(timezone.utc).isoformat(),
+                    ip,
+                    request.headers.get("User-Agent", "")[:300],
+                ),
+            )
+            db.commit()
+        db.close()
+    except Exception:
+        pass  # never break the pixel response
+    resp = Response(PIXEL_PNG, mimetype="image/png")
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
+
+
+@app.route("/health")
+def health():
+    return {"ok": True}
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

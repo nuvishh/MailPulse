@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New tracked email – Mail Tracker</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f6f7f9; color: #1c1e21; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 48px 20px; }
+  .card { background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  h1 { font-size: 22px; margin: 0 0 20px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: #5f6368; margin: 14px 0 6px; }
+  input { width: 100%; padding: 10px 12px; border: 1px solid #dadce0; border-radius: 8px; font-size: 15px; }
+  input:focus { outline: 2px solid #1a73e8; border-color: #1a73e8; }
+  .btn { margin-top: 22px; background: #1a73e8; color: #fff; border: 0; padding: 11px 20px; border-radius: 8px; font-size: 15px; cursor: pointer; width: 100%; }
+  .btn:hover { background: #1765cc; }
+  .back { display: inline-block; margin-bottom: 16px; color: #1a73e8; text-decoration: none; font-size: 14px; }
+  .error { background: #fce8e6; color: #a50e0e; padding: 10px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">← Back to dashboard</a>
+  <div class="card">
+    <h1>New tracked email</h1>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <form method="post">
+      <label for="recipient">Recipient (name or email — for your reference)</label>
+      <input id="recipient" name="recipient" placeholder="e.g. recruiter@company.com" required>
+      <label for="subject">Subject (for your reference)</label>
+      <input id="subject" name="subject" placeholder="e.g. Application for Flutter Developer">
+      <button class="btn" type="submit">Generate tracking pixel</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

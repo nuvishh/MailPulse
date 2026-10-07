@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mail Tracker</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f6f7f9; color: #1c1e21; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  h1 { font-size: 26px; margin: 0; }
+  .btn { display: inline-block; background: #1a73e8; color: #fff; border: 0; padding: 10px 18px; border-radius: 8px; font-size: 14px; cursor: pointer; text-decoration: none; }
+  .btn:hover { background: #1765cc; }
+  .btn.danger { background: #e8eaed; color: #5f6368; padding: 6px 12px; font-size: 12px; }
+  .btn.danger:hover { background: #dadce0; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  th, td { text-align: left; padding: 12px 14px; font-size: 14px; border-bottom: 1px solid #eef0f3; }
+  th { background: #fafbfc; color: #5f6368; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  tr:last-child td { border-bottom: 0; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .badge.opened { background: #e6f4ea; color: #137333; }
+  .badge.pending { background: #fef7e0; color: #b06000; }
+  .empty { background: #fff; border-radius: 12px; padding: 48px 20px; text-align: center; color: #5f6368; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .howto { margin-top: 32px; background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .howto h2 { font-size: 17px; margin: 0 0 12px; }
+  .howto ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.9; color: #3c4043; }
+  .howto code { background: #f1f3f4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .warn { background: #fef7e0; border: 1px solid #f9e7a8; color: #7a5b00; padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; }
+  .mono { font-family: ui-monospace, monospace; font-size: 12px; color: #5f6368; word-break: break-all; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📬 Mail Tracker</h1>
+    <a class="btn" href="/new">+ New tracked email</a>
+  </header>
+
+  {% if no_auth %}
+  <div class="warn">⚠️ Dashboard password is not set. Anyone with this URL can see your tracking data. Set the <code>DASHBOARD_PASSWORD</code> environment variable.</div>
+  {% endif %}
+
+  {% if rows %}
+  <table>
+    <tr><th>Recipient</th><th>Subject</th><th>Status</th><th>Opens</th><th>First opened</th><th>Last opened</th><th></th></tr>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.recipient }}</td>
+      <td>{{ r.subject }}</td>
+      <td>{% if r.opened %}<span class="badge opened">✓ Opened</span>{% else %}<span class="badge pending">Unopened</span>{% endif %}</td>
+      <td>{{ r.opens }}</td>
+      <td>{{ r.first }}</td>
+      <td>{{ r.last }}</td>
+      <td>
+        <form method="post" action="/delete/{{ r.id }}" onsubmit="return confirm('Delete this tracked email?')" style="display:inline">
+          <button class="btn danger" type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <div class="empty">
+    <p style="font-size:16px">No tracked emails yet.</p>
+    <p>Click <b>+ New tracked email</b> to create your first tracking pixel.</p>
+  </div>
+  {% endif %}
+
+  <div class="howto">
+    <h2>How to use with Gmail</h2>
+    <ol>
+      <li>Click <b>+ New tracked email</b> and enter the recipient &amp; subject.</li>
+      <li>Copy the <b>pixel image URL</b> shown on the next page.</li>
+      <li>In Gmail compose, click the <b>Insert photo</b> (🖼️) icon → <b>Web address (URL)</b> → paste the URL → <b>Insert</b>. Set the image size to <b>Small</b>.</li>
+      <li>Send your mail as usual. When the recipient opens it, this dashboard will show ✓ Opened with the time.</li>
+    </ol>
+    <p style="font-size:13px;color:#5f6368;margin:12px 0 0">Note: if the recipient's mail app blocks images, the open won't register. Tracking is reliable in most cases but not 100%.</p>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tracking pixel ready – Mail Tracker</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f6f7f9; color: #1c1e21; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 48px 20px; }
+  .card { background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .sub { color: #5f6368; font-size: 14px; margin-bottom: 20px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: #5f6368; margin: 16px 0 6px; }
+  .urlbox { display: flex; gap: 8px; }
+  .urlbox input { flex: 1; padding: 10px 12px; border: 1px solid #dadce0; border-radius: 8px; font-size: 13px; font-family: ui-monospace, monospace; background: #f8f9fa; }
+  .btn { background: #1a73e8; color: #fff; border: 0; padding: 10px 18px; border-radius: 8px; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn:hover { background: #1765cc; }
+  .btn.secondary { background: #e8eaed; color: #1a73e8; }
+  .steps { margin-top: 24px; }
+  .steps h2 { font-size: 16px; margin: 0 0 10px; }
+  .steps ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 2; color: #3c4043; }
+  .ok { color: #137333; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1><span class="ok">✓</span> Tracking pixel ready</h1>
+    <p class="sub">To: <b>{{ recipient }}</b> &nbsp;·&nbsp; Subject: <b>{{ subject }}</b></p>
+
+    <label>Pixel image URL — paste this into Gmail via Insert photo → Web address</label>
+    <div class="urlbox">
+      <input id="pixelurl" readonly value="{{ pixel_url }}" onclick="this.select()">
+      <button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('pixelurl').value);this.textContent='Copied!'">Copy</button>
+    </div>
+
+    <div class="steps">
+      <h2>Use it in Gmail</h2>
+      <ol>
+        <li>Compose your mail in Gmail as usual.</li>
+        <li>Click the <b>Insert photo</b> (🖼️) icon → <b>Web address (URL)</b>.</li>
+        <li>Paste the pixel URL above → <b>Insert</b>, set size to <b>Small</b>.</li>
+        <li>Send. Opens will appear on your dashboard.</li>
+      </ol>
+    </div>
+
+    <p style="margin-top:24px"><a class="btn secondary" href="/">← Back to dashboard</a></p>
+  </div>
+</div>
+</body>
+</html>
