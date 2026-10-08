@@ -26,9 +26,10 @@ from datetime import datetime, timezone
 from functools import wraps
 from zoneinfo import ZoneInfo
 
-from flask import Flask, Response, g, redirect, render_template, request, url_for
+from flask import Flask, Response, g, redirect, render_template, request, session, url_for
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "") or os.urandom(32).hex()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.environ.get("DB_PATH", os.path.join(BASE_DIR, "tracker.db"))
@@ -86,22 +87,36 @@ init_db()
 def check_auth():
     if not ADMIN_PASSWORD:
         return True
-    auth = request.authorization
-    return bool(auth and auth.password == ADMIN_PASSWORD)
+    return session.get("authed", False)
 
 
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if not check_auth():
-            return Response(
-                "Login required",
-                401,
-                {"WWW-Authenticate": 'Basic realm="mail-tracker"'},
-            )
+            return redirect(url_for("login", next=request.path))
         return f(*args, **kwargs)
 
     return decorated
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if ADMIN_PASSWORD and check_auth():
+        return redirect(url_for("dashboard"))
+    error = None
+    if request.method == "POST":
+        if ADMIN_PASSWORD and request.form.get("password", "") == ADMIN_PASSWORD:
+            session["authed"] = True
+            return redirect(request.args.get("next") or url_for("dashboard"))
+        error = "Wrong password. Try again."
+    return render_template("login.html", error=error)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 
 def fmt_time(iso):
@@ -162,7 +177,17 @@ def dashboard():
                 "pixel_url": url_for("pixel", tid=e["id"], _external=True),
             }
         )
-    return render_template("dashboard.html", rows=rows, no_auth=not ADMIN_PASSWORD)
+    total = len(rows)
+    opened_count = sum(1 for r in rows if r["opened"])
+    open_rate = round(opened_count / total * 100) if total else 0
+    return render_template(
+        "dashboard.html",
+        rows=rows,
+        no_auth=not ADMIN_PASSWORD,
+        total=total,
+        opened_count=opened_count,
+        open_rate=open_rate,
+    )
 
 
 @app.route("/email/<tid>")

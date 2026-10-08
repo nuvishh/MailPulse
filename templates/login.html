@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in – Mail Tracker</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 60%, #a855f7 100%);
+    padding: 20px;
+  }
+  .card {
+    background: #fff; border-radius: 20px; padding: 40px 36px; width: 100%; max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    animation: rise .45s ease-out;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .logo {
+    width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 28px; background: linear-gradient(135deg, #4f46e5, #a855f7); margin-bottom: 18px;
+  }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .sub { color: #6b7280; font-size: 14px; margin: 0 0 24px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: #4b5563; margin-bottom: 6px; }
+  input {
+    width: 100%; padding: 12px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 15px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,.15); }
+  .btn {
+    width: 100%; margin-top: 18px; padding: 12px; border: 0; border-radius: 10px; font-size: 15px; font-weight: 600;
+    color: #fff; background: linear-gradient(135deg, #4f46e5, #7c3aed); cursor: pointer;
+    transition: transform .1s, box-shadow .15s;
+  }
+  .btn:hover { box-shadow: 0 6px 18px rgba(79,70,229,.4); }
+  .btn:active { transform: scale(.98); }
+  .error {
+    background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
+    padding: 10px 14px; border-radius: 10px; font-size: 14px; margin-bottom: 16px;
+  }
+  .foot { text-align: center; color: rgba(255,255,255,.75); font-size: 13px; margin-top: 22px; }
+</style>
+</head>
+<body>
+  <div>
+    <div class="card">
+      <div class="logo">📬</div>
+      <h1>Welcome back</h1>
+      <p class="sub">Sign in to your Mail Tracker dashboard</p>
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+      <form method="post">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="Enter dashboard password" autocomplete="current-password" autofocus required>
+        <button class="btn" type="submit">Sign in →</button>
+      </form>
+    </div>
+    <p class="foot">MailPulse · Know what happens after Send</p>
+  </div>
+</body>
+</html>
