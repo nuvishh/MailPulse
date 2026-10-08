@@ -113,6 +113,30 @@ def fmt_time(iso):
     return dt.astimezone(LOCAL_TZ).strftime("%d %b %Y, %I:%M %p")
 
 
+def describe_ua(ua):
+    """Short human-friendly label for a User-Agent string."""
+    ua = ua or ""
+    low = ua.lower()
+    if not ua:
+        return "—"
+    if "googleimageproxy" in low:
+        return "Gmail (Google image proxy)"
+    if "yahoo" in low and "proxy" in low:
+        return "Yahoo Mail (proxy)"
+    labels = []
+    if any(m in low for m in ("iphone", "android", "mobile")):
+        labels.append("Mobile")
+    else:
+        labels.append("Desktop")
+    for name in ("Outlook", "Thunderbird", "Chrome", "Safari", "Firefox", "Edge"):
+        if name.lower() in low:
+            labels.append(name)
+            break
+    if "applewebkit" in low and "mail" in low:
+        labels.append("Apple Mail")
+    return " · ".join(labels)
+
+
 @app.route("/")
 @requires_auth
 def dashboard():
@@ -139,6 +163,35 @@ def dashboard():
             }
         )
     return render_template("dashboard.html", rows=rows, no_auth=not ADMIN_PASSWORD)
+
+
+@app.route("/email/<tid>")
+@requires_auth
+def email_detail(tid):
+    db = get_db()
+    e = db.execute("SELECT * FROM emails WHERE id = ?", (tid,)).fetchone()
+    if not e:
+        return redirect(url_for("dashboard"))
+    opens = db.execute(
+        "SELECT * FROM opens WHERE email_id = ? ORDER BY opened_at DESC", (tid,)
+    ).fetchall()
+    rows = [
+        {
+            "at": fmt_time(o["opened_at"]),
+            "ip": o["ip"] or "—",
+            "via": describe_ua(o["user_agent"]),
+            "ua": o["user_agent"] or "—",
+        }
+        for o in opens
+    ]
+    return render_template(
+        "email_detail.html",
+        recipient=e["recipient"],
+        subject=e["subject"] or "—",
+        created=fmt_time(e["created_at"]),
+        pixel_url=url_for("pixel", tid=tid, _external=True),
+        opens=rows,
+    )
 
 
 @app.route("/new", methods=["GET", "POST"])

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ recipient }} – Mail Tracker</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f6f7f9; color: #1c1e21; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
+  .back { display: inline-block; margin-bottom: 16px; color: #1a73e8; text-decoration: none; font-size: 14px; }
+  .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .meta { color: #5f6368; font-size: 14px; margin: 4px 0; }
+  .meta b { color: #1c1e21; }
+  h2 { font-size: 17px; margin: 0 0 12px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  th, td { text-align: left; padding: 12px 14px; font-size: 14px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
+  th { background: #fafbfc; color: #5f6368; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  tr:last-child td { border-bottom: 0; }
+  .mono { font-family: ui-monospace, monospace; font-size: 12px; color: #3c4043; }
+  .ua { font-family: ui-monospace, monospace; font-size: 11px; color: #80868b; word-break: break-all; max-width: 340px; }
+  .empty { background: #fff; border-radius: 12px; padding: 40px 20px; text-align: center; color: #5f6368; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .note { font-size: 13px; color: #5f6368; margin-top: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">← Back to dashboard</a>
+  <div class="card">
+    <h1>{{ recipient }}</h1>
+    <p class="meta">Subject: <b>{{ subject }}</b></p>
+    <p class="meta">Tracked since: <b>{{ created }}</b> · Opens: <b>{{ opens|length }}</b></p>
+  </div>
+
+  <h2>Open details</h2>
+  {% if opens %}
+  <table>
+    <tr><th>#</th><th>Opened at</th><th>IP address</th><th>Device / App</th><th>User agent</th></tr>
+    {% for o in opens %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td style="white-space:nowrap">{{ o.at }}</td>
+      <td class="mono">{{ o.ip }}</td>
+      <td>{{ o.via }}</td>
+      <td class="ua">{{ o.ua }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="note">Note: Gmail loads images through Google's proxy servers, so Gmail opens usually show a Google IP rather than the recipient's real IP — the open time is still accurate. Apple Mail may pre-load images and cause extra opens.</p>
+  {% else %}
+  <div class="empty"><p>Not opened yet. When the recipient opens the mail, each open will appear here with time, IP and device info.</p></div>
+  {% endif %}
+</div>
+</body>
+</html>
