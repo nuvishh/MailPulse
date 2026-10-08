@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings – Mail Tracker</title>
+<script>(function(){try{var t=localStorage.getItem('mp-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<style>
+  :root {
+    --bg: #f4f5fb; --card: #ffffff; --text: #1c1e21; --muted: #6b7280;
+    --border: #e5e7eb; --input: #ffffff; --accent: #4f46e5; --accent2: #7c3aed;
+    --shadow: 0 1px 4px rgba(0,0,0,.06);
+    --green-bg: #d1fae5; --green-tx: #065f46; --red-bg: #fef2f2; --red-tx: #b91c1c;
+  }
+  [data-theme="dark"] {
+    --bg: #0b0f1a; --card: #141b2e; --text: #e8eaf0; --muted: #9aa3b5;
+    --border: #263052; --input: #0f1626; --accent: #818cf8; --accent2: #a78bfa;
+    --shadow: 0 1px 4px rgba(0,0,0,.35);
+    --green-bg: #06352a; --green-tx: #6ee7b7; --red-bg: #450a0a; --red-tx: #fca5a5;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: var(--bg); color: var(--text); transition: background .2s, color .2s; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 40px 20px 60px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .back { color: var(--accent); text-decoration: none; font-size: 14px; font-weight: 600; }
+  .iconbtn { background: var(--card); border: 1px solid var(--border); border-radius: 10px; width: 40px; height: 40px; font-size: 18px; cursor: pointer; color: var(--text); }
+  .card { background: var(--card); border-radius: 14px; padding: 28px; box-shadow: var(--shadow); margin-bottom: 20px; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  h2 { font-size: 16px; margin: 0 0 10px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 18px; line-height: 1.6; }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 14px 0 6px; }
+  input { width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--input); color: var(--text); font-family: ui-monospace, monospace; }
+  input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
+  .btnrow { display: flex; gap: 10px; margin-top: 20px; }
+  .btn { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; border: 0; padding: 11px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn:hover { box-shadow: 0 6px 18px rgba(79,70,229,.35); }
+  .btn.secondary { background: var(--input); color: var(--accent); border: 1px solid var(--border); }
+  .msg { padding: 10px 14px; border-radius: 10px; font-size: 14px; margin-bottom: 14px; }
+  .msg.ok { background: var(--green-bg); color: var(--green-tx); }
+  .msg.err { background: var(--red-bg); color: var(--red-tx); }
+  ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.9; color: var(--muted); }
+  ol b, .mono b { color: var(--text); }
+  .mono { font-family: ui-monospace, monospace; font-size: 12px; word-break: break-all; background: var(--input); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-top: 8px; color: var(--text); }
+  code { background: var(--input); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="back" href="/">← Back to dashboard</a>
+    <button class="iconbtn" id="themebtn" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
+  </div>
+
+  <div class="card">
+    <h1>⚙️ Settings</h1>
+    <p class="sub">Instant notifications for opens, clicks and follow-up reminders via Telegram.</p>
+    {% if msg %}<div class="msg {{ 'ok' if 'sent' in msg or 'saved' in msg else 'err' }}">{{ msg }}</div>{% endif %}
+    <form method="post">
+      <label for="tg_bot_token">Telegram bot token</label>
+      <input id="tg_bot_token" name="tg_bot_token" type="password" value="{{ tg_bot_token }}" placeholder="123456:ABC-DEF..." autocomplete="off">
+      <label for="tg_chat_id">Telegram chat ID</label>
+      <input id="tg_chat_id" name="tg_chat_id" value="{{ tg_chat_id }}" placeholder="e.g. 987654321" autocomplete="off">
+      <div class="btnrow">
+        <button class="btn" type="submit" name="save" value="1">Save</button>
+        <button class="btn secondary" type="submit" name="test" value="1">Send test message</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>🤖 How to get a Telegram bot</h2>
+    <ol>
+      <li>Open Telegram and chat with <b>@BotFather</b> → <code>/newbot</code> → follow the steps.</li>
+      <li>Copy the <b>bot token</b> it gives you and paste it above.</li>
+      <li>Start a chat with your new bot (tap <b>Start</b>).</li>
+      <li>Open <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code> in your browser, find <code>"chat":{"id":...}</code> — that's your <b>chat ID</b>.</li>
+      <li>Paste it above, save, and hit <b>Send test message</b>.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>⏰ Follow-up reminder checker</h2>
+    <p class="sub">The app can't run background jobs on free hosting, so ping this URL <b>once a day</b> with a free external cron (e.g. <b>cron-job.org</b> — free, no card). It sends Telegram reminders for tracked emails still unopened past their follow-up days.</p>
+    <div class="mono">{{ cron_url }}</div>
+  </div>
+</div>
+<script>
+function toggleTheme(){
+  var d = document.documentElement;
+  var t = d.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  d.setAttribute('data-theme', t);
+  try { localStorage.setItem('mp-theme', t); } catch(e) {}
+  var b = document.getElementById('themebtn'); if (b) b.textContent = t === 'dark' ? '☀️' : '🌙';
+}
+try { if (localStorage.getItem('mp-theme') === 'dark') document.getElementById('themebtn').textContent = '☀️'; } catch(e) {}
+</script>
+</body>
+</html>

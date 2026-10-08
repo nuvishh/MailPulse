@@ -4,64 +4,71 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mail Tracker</title>
+<script>(function(){try{var t=localStorage.getItem('mp-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <style>
+  :root {
+    --bg: #f4f5fb; --card: #ffffff; --text: #1c1e21; --muted: #6b7280;
+    --border: #e5e7eb; --soft: #f3f4f6; --thead: #fafbff; --input: #ffffff;
+    --accent: #4f46e5; --accent2: #7c3aed; --hover: #fafbff;
+    --green-bg: #d1fae5; --green-tx: #065f46; --amber-bg: #fef3c7; --amber-tx: #92400e;
+    --shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  [data-theme="dark"] {
+    --bg: #0b0f1a; --card: #141b2e; --text: #e8eaf0; --muted: #9aa3b5;
+    --border: #263052; --soft: #1a2340; --thead: #141c33; --input: #0f1626;
+    --accent: #818cf8; --accent2: #a78bfa; --hover: #182138;
+    --green-bg: #06352a; --green-tx: #6ee7b7; --amber-bg: #4a2c0a; --amber-tx: #fcd34d;
+    --shadow: 0 1px 4px rgba(0,0,0,.35);
+  }
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f4f5fb; color: #1c1e21; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: var(--bg); color: var(--text); transition: background .2s, color .2s; }
   .wrap { max-width: 1000px; margin: 0 auto; padding: 32px 20px 60px; }
   header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
   .brand { display: flex; align-items: center; gap: 12px; }
-  .brand .logo {
-    width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-    font-size: 24px; background: linear-gradient(135deg, #4f46e5, #a855f7); box-shadow: 0 4px 12px rgba(79,70,229,.3);
-  }
+  .brand .logo { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: linear-gradient(135deg, #4f46e5, #a855f7); box-shadow: 0 4px 12px rgba(79,70,229,.3); }
   h1 { font-size: 24px; margin: 0; }
-  h1 small { display: block; font-size: 12px; color: #6b7280; font-weight: 400; }
-  .actions { display: flex; gap: 10px; }
+  h1 small { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
+  .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .btn { display: inline-block; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; border: 0; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: box-shadow .15s; }
   .btn:hover { box-shadow: 0 6px 18px rgba(79,70,229,.35); }
-  .btn.ghost { background: #fff; color: #4b5563; border: 1px solid #e5e7eb; box-shadow: none; }
-  .btn.ghost:hover { background: #f9fafb; box-shadow: none; }
-  .btn.danger { background: #fff; color: #9ca3af; border: 1px solid #e5e7eb; padding: 6px 12px; font-size: 12px; font-weight: 500; box-shadow: none; }
-  .btn.danger:hover { color: #dc2626; border-color: #fecaca; background: #fef2f2; box-shadow: none; }
+  .btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
+  .btn.ghost:hover { box-shadow: none; filter: brightness(.97); }
+  .btn.danger { background: var(--card); color: var(--muted); border: 1px solid var(--border); padding: 6px 12px; font-size: 12px; font-weight: 500; box-shadow: none; }
+  .btn.danger:hover { color: #dc2626; border-color: #fca5a5; box-shadow: none; }
+  .iconbtn { background: var(--card); border: 1px solid var(--border); border-radius: 10px; width: 40px; height: 40px; font-size: 18px; cursor: pointer; color: var(--text); }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
-  .stat { background: #fff; border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .stat { background: var(--card); border-radius: 14px; padding: 18px 20px; box-shadow: var(--shadow); }
   .stat .num { font-size: 28px; font-weight: 700; }
-  .stat .lbl { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
-  .stat.indigo .num { color: #4f46e5; } .stat.green .num { color: #059669; } .stat.amber .num { color: #d97706; }
+  .stat .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+  .stat.indigo .num { color: var(--accent); } .stat.green .num { color: #10b981; } .stat.amber .num { color: #f59e0b; }
   .toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
   .search { position: relative; flex: 1; min-width: 200px; }
-  .search input {
-    width: 100%; padding: 11px 14px 11px 40px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 14px; background: #fff;
-    transition: border-color .15s, box-shadow .15s;
-  }
-  .search input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
-  .search .icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 16px; }
+  .search input { width: 100%; padding: 11px 14px 11px 40px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--input); color: var(--text); transition: border-color .15s, box-shadow .15s; }
+  .search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
+  .search .icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 16px; }
   .pills { display: flex; gap: 8px; }
-  .pill {
-    border: 1.5px solid #e5e7eb; background: #fff; color: #4b5563; padding: 9px 16px; border-radius: 999px;
-    font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s;
-  }
-  .pill:hover { border-color: #c7d2fe; }
+  .pill { border: 1.5px solid var(--border); background: var(--card); color: var(--text); padding: 9px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
   .pill.active { background: #4f46e5; border-color: #4f46e5; color: #fff; box-shadow: 0 4px 12px rgba(79,70,229,.3); }
-  .card { background: #fff; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.06); overflow: hidden; }
+  .card { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
   table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 13px 16px; font-size: 14px; border-bottom: 1px solid #f3f4f6; }
-  th { background: #fafbff; color: #6b7280; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  th, td { text-align: left; padding: 13px 16px; font-size: 14px; border-bottom: 1px solid var(--border); }
+  th { background: var(--thead); color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
   tbody tr { transition: background .1s; }
-  tbody tr:hover { background: #fafbff; }
+  tbody tr:hover { background: var(--hover); }
   tr:last-child td { border-bottom: 0; }
   .badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-  .badge.opened { background: #d1fae5; color: #065f46; }
-  .badge.pending { background: #fef3c7; color: #92400e; }
-  .rlink { color: #4f46e5; text-decoration: none; font-weight: 600; }
+  .badge.opened { background: var(--green-bg); color: var(--green-tx); }
+  .badge.pending { background: var(--amber-bg); color: var(--amber-tx); }
+  .rlink { color: var(--accent); text-decoration: none; font-weight: 600; }
   .rlink:hover { text-decoration: underline; }
-  .empty { padding: 56px 20px; text-align: center; color: #6b7280; }
+  .empty { padding: 56px 20px; text-align: center; color: var(--muted); }
   .empty .big { font-size: 40px; margin-bottom: 8px; }
-  .howto { margin-top: 28px; background: #fff; border-radius: 14px; padding: 24px 26px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .howto { margin-top: 28px; background: var(--card); border-radius: 14px; padding: 24px 26px; box-shadow: var(--shadow); }
   .howto h2 { font-size: 17px; margin: 0 0 12px; }
-  .howto ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.9; color: #4b5563; }
-  .howto .note { font-size: 13px; color: #6b7280; margin: 12px 0 0; }
-  .warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 18px; }
+  .howto ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.9; color: var(--muted); }
+  .howto b { color: var(--text); }
+  .howto .note { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+  .warn { background: var(--amber-bg); border: 1px solid var(--border); color: var(--amber-tx); padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 18px; }
   @media (max-width: 640px) { .stats { grid-template-columns: 1fr; } th:nth-child(5), td:nth-child(5), th:nth-child(6), td:nth-child(6) { display: none; } }
 </style>
 </head>
@@ -73,6 +80,9 @@
       <h1>Mail Tracker<small>MailPulse · Know what happens after Send</small></h1>
     </div>
     <div class="actions">
+      <button class="iconbtn" id="themebtn" onclick="toggleTheme()" title="Toggle dark mode">🌙</button>
+      <a class="btn ghost" href="/export">📥 Export CSV</a>
+      <a class="btn ghost" href="/settings">⚙️ Settings</a>
       <a class="btn" href="/new">+ New tracked email</a>
       {% if not no_auth %}<a class="btn ghost" href="/logout">Logout</a>{% endif %}
     </div>
@@ -138,17 +148,26 @@
   <div class="howto">
     <h2>How to use with Gmail</h2>
     <ol>
-      <li>Click <b>+ New tracked email</b> and enter the recipient &amp; subject.</li>
+      <li>Click <b>+ New tracked email</b> and enter the recipient &amp; subject. Optionally add trackable links and a follow-up reminder.</li>
       <li>Copy the <b>pixel image URL</b> shown on the next page.</li>
       <li>In Gmail compose, click the <b>Insert photo</b> (🖼️) icon → <b>Web address (URL)</b> → paste the URL → <b>Insert</b>. Set the image size to <b>Small</b>.</li>
-      <li>Send your mail as usual. Click the recipient's name here to see each open with time, IP and device info.</li>
+      <li>For tracked links: paste the <b>tracking link URL</b> (the /c/… one) as the hyperlink in your mail instead of the direct URL.</li>
+      <li>Send your mail as usual. Enable Telegram in <b>⚙️ Settings</b> for instant open/click notifications.</li>
     </ol>
     <p class="note">Note: if the recipient's mail app blocks images, the open won't register. Tracking is reliable in most cases but not 100%.</p>
   </div>
 </div>
 
 <script>
-(function() {
+function toggleTheme(){
+  var d = document.documentElement;
+  var t = d.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  d.setAttribute('data-theme', t);
+  try { localStorage.setItem('mp-theme', t); } catch(e) {}
+  var b = document.getElementById('themebtn'); if (b) b.textContent = t === 'dark' ? '☀️' : '🌙';
+}
+(function(){
+  try { if (localStorage.getItem('mp-theme') === 'dark') document.getElementById('themebtn').textContent = '☀️'; } catch(e) {}
   var q = document.getElementById('search');
   if (!q) return;
   var pills = document.querySelectorAll('.pill');

@@ -4,36 +4,68 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tracking pixel ready – Mail Tracker</title>
+<script>(function(){try{var t=localStorage.getItem('mp-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <style>
+  :root {
+    --bg: #f4f5fb; --card: #ffffff; --text: #1c1e21; --muted: #6b7280;
+    --border: #e5e7eb; --input: #f8f9fa; --accent: #4f46e5; --accent2: #7c3aed;
+    --shadow: 0 1px 4px rgba(0,0,0,.06); --ok: #059669;
+  }
+  [data-theme="dark"] {
+    --bg: #0b0f1a; --card: #141b2e; --text: #e8eaf0; --muted: #9aa3b5;
+    --border: #263052; --input: #0f1626; --accent: #818cf8; --accent2: #a78bfa;
+    --shadow: 0 1px 4px rgba(0,0,0,.35); --ok: #34d399;
+  }
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f6f7f9; color: #1c1e21; }
-  .wrap { max-width: 640px; margin: 0 auto; padding: 48px 20px; }
-  .card { background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: var(--bg); color: var(--text); transition: background .2s, color .2s; }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 60px; }
+  .topbar { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+  .iconbtn { background: var(--card); border: 1px solid var(--border); border-radius: 10px; width: 40px; height: 40px; font-size: 18px; cursor: pointer; color: var(--text); }
+  .card { background: var(--card); border-radius: 14px; padding: 28px; box-shadow: var(--shadow); }
   h1 { font-size: 22px; margin: 0 0 6px; }
-  .sub { color: #5f6368; font-size: 14px; margin-bottom: 20px; }
-  label { display: block; font-size: 13px; font-weight: 600; color: #5f6368; margin: 16px 0 6px; }
-  .urlbox { display: flex; gap: 8px; }
-  .urlbox input { flex: 1; padding: 10px 12px; border: 1px solid #dadce0; border-radius: 8px; font-size: 13px; font-family: ui-monospace, monospace; background: #f8f9fa; }
-  .btn { background: #1a73e8; color: #fff; border: 0; padding: 10px 18px; border-radius: 8px; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block; }
-  .btn:hover { background: #1765cc; }
-  .btn.secondary { background: #e8eaed; color: #1a73e8; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  .sub b { color: var(--text); }
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 18px 0 6px; }
+  .urlbox { display: flex; gap: 8px; margin-bottom: 6px; }
+  .urlbox input { flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-family: ui-monospace, monospace; background: var(--input); color: var(--text); min-width: 0; }
+  .btn { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; border: 0; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; }
+  .btn:hover { box-shadow: 0 6px 18px rgba(79,70,229,.35); }
+  .btn.secondary { background: var(--input); color: var(--accent); border: 1px solid var(--border); }
+  .linkrow { border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  .linkrow .lbl { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
   .steps { margin-top: 24px; }
   .steps h2 { font-size: 16px; margin: 0 0 10px; }
-  .steps ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 2; color: #3c4043; }
-  .ok { color: #137333; font-weight: 600; }
+  .steps ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 2; color: var(--muted); }
+  .steps b { color: var(--text); }
+  .ok { color: var(--ok); font-weight: 700; }
+  .pill { display: inline-block; background: var(--input); border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px; font-size: 12px; color: var(--muted); margin-top: 8px; }
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="topbar"><button class="iconbtn" id="themebtn" onclick="toggleTheme()" title="Toggle dark mode">🌙</button></div>
   <div class="card">
     <h1><span class="ok">✓</span> Tracking pixel ready</h1>
-    <p class="sub">To: <b>{{ recipient }}</b> &nbsp;·&nbsp; Subject: <b>{{ subject }}</b></p>
+    <p class="sub">To: <b>{{ recipient }}</b> &nbsp;·&nbsp; Subject: <b>{{ subject }}</b>{% if followup_days %}<br><span class="pill">⏰ Follow-up reminder in {{ followup_days }} days if unopened</span>{% endif %}</p>
 
-    <label>Pixel image URL — paste this into Gmail via Insert photo → Web address</label>
+    <label>Pixel image URL — paste into Gmail via Insert photo → Web address</label>
     <div class="urlbox">
       <input id="pixelurl" readonly value="{{ pixel_url }}" onclick="this.select()">
-      <button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('pixelurl').value);this.textContent='Copied!'">Copy</button>
+      <button class="btn" onclick="copyText('pixelurl', this)">Copy</button>
     </div>
+
+    {% if links %}
+    <label>Tracked link URLs — use these as the hyperlinks in your mail</label>
+    {% for l in links %}
+    <div class="linkrow">
+      <div class="lbl">🔗 {{ l.label }}</div>
+      <div class="urlbox">
+        <input id="link{{ loop.index }}" readonly value="{{ l.track_url }}" onclick="this.select()">
+        <button class="btn" onclick="copyText('link{{ loop.index }}', this)">Copy</button>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
 
     <div class="steps">
       <h2>Use it in Gmail</h2>
@@ -41,12 +73,30 @@
         <li>Compose your mail in Gmail as usual.</li>
         <li>Click the <b>Insert photo</b> (🖼️) icon → <b>Web address (URL)</b>.</li>
         <li>Paste the pixel URL above → <b>Insert</b>, set size to <b>Small</b>.</li>
-        <li>Send. Opens will appear on your dashboard.</li>
+        <li>For links: select the link text → <b>Insert link</b> → paste the tracking URL.</li>
+        <li>Send. Opens and clicks appear on your dashboard (enable Telegram in ⚙️ Settings for instant alerts).</li>
       </ol>
     </div>
 
     <p style="margin-top:24px"><a class="btn secondary" href="/">← Back to dashboard</a></p>
   </div>
 </div>
+<script>
+function toggleTheme(){
+  var d = document.documentElement;
+  var t = d.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  d.setAttribute('data-theme', t);
+  try { localStorage.setItem('mp-theme', t); } catch(e) {}
+  var b = document.getElementById('themebtn'); if (b) b.textContent = t === 'dark' ? '☀️' : '🌙';
+}
+try { if (localStorage.getItem('mp-theme') === 'dark') document.getElementById('themebtn').textContent = '☀️'; } catch(e) {}
+function copyText(id, btn){
+  var el = document.getElementById(id);
+  el.select();
+  var done = function(){ btn.textContent = 'Copied!'; setTimeout(function(){ btn.textContent = 'Copy'; }, 1500); };
+  if (navigator.clipboard) { navigator.clipboard.writeText(el.value).then(done).catch(function(){ document.execCommand('copy'); done(); }); }
+  else { document.execCommand('copy'); done(); }
+}
+</script>
 </body>
 </html>

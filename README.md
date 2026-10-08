@@ -1,10 +1,24 @@
-# 📬 Mail Tracker (self-hosted)
+# 📬 MailPulse
+_Know what happens after Send._
 
-Know when someone opens your email. A tiny self-hosted email open tracker:
-create a tracked email on the dashboard, get a unique tracking-pixel image URL,
-insert it into your Gmail, and see opens on the dashboard.
+A tiny self-hosted email open tracker: create a tracked email on the
+dashboard, get a unique tracking-pixel image URL, insert it into your Gmail,
+and see opens on the dashboard. No branding, no signature, no third party —
+your server, your data.
 
-No branding, no signature, no third party — your server, your data.
+## Features
+
+- **Open tracking** — invisible 1×1 pixel per email, with open count and timestamps
+- **Open details** — click a recipient to see each open's time, IP and device/app
+- **Link click tracking** — add links when creating a tracked email; use the
+  generated `/c/…` URLs as hyperlinks in your mail to log clicks
+- **🔔 Telegram notifications** — instant alerts for opens, link clicks and
+  follow-up reminders (configure in ⚙️ Settings)
+- **⏰ Follow-up reminders** — set "remind me in N days if unopened"; a daily
+  ping to `/api/check-followups?key=…` sends Telegram reminders (see below)
+- **📥 CSV export** — download all opens and clicks from the dashboard
+- **🌙 Dark mode** — toggle in the header, remembered per browser
+- **🔍 Search & filter** — live search plus All/Opened/Unopened pills, stats cards
 
 ## How it works
 
@@ -60,6 +74,29 @@ no card needed, and the SQLite database persists on their disk.
 
 Note: free web apps need an occasional renewal — PythonAnywhere emails you,
 just log in and extend it.
+
+## Telegram notifications
+
+1. Chat with **@BotFather** on Telegram → `/newbot` → copy the bot token.
+2. Start a chat with your new bot (tap **Start**).
+3. Open `https://api.telegram.org/bot<token>/getUpdates`, find
+   `"chat":{"id":…}` — that's your chat ID.
+4. In MailPulse go to **⚙️ Settings**, paste both, save, and hit
+   **Send test message**.
+
+You can also set `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` as environment
+variables instead of using the settings page.
+
+## Follow-up reminders
+
+Free hosting can't run background jobs, so an external cron pings the app:
+
+1. When creating a tracked email, set **Follow-up reminder** to e.g. `3` days.
+2. Create a free account at [cron-job.org](https://cron-job.org) (no card) and
+   add a daily job hitting:
+   `https://<your-url>/api/check-followups?key=<your-dashboard-password>`
+3. If a tracked email is still unopened after N days, you get a Telegram
+   reminder — once per email.
 
 ## Environment variables
 

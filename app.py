@@ -19,8 +19,12 @@ Routes:
 """
 
 import base64
+import csv
+import io
 import os
 import sqlite3
+import urllib.parse
+import urllib.request
 import uuid
 from datetime import datetime, timezone
 from functools import wraps
@@ -56,6 +60,26 @@ CREATE TABLE IF NOT EXISTS opens (
     user_agent TEXT DEFAULT '',
     FOREIGN KEY (email_id) REFERENCES emails(id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS links (
+    id TEXT PRIMARY KEY,
+    email_id TEXT NOT NULL,
+    label TEXT NOT NULL DEFAULT '',
+    target_url TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (email_id) REFERENCES emails(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS clicks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    link_id TEXT NOT NULL,
+    clicked_at TEXT NOT NULL,
+    ip TEXT DEFAULT '',
+    user_agent TEXT DEFAULT '',
+    FOREIGN KEY (link_id) REFERENCES links(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL DEFAULT ''
+);
 """
 
 
@@ -81,7 +105,20 @@ def init_db():
     db.close()
 
 
+def migrate():
+    """Add newer columns to existing databases."""
+    db = sqlite3.connect(DB_PATH)
+    cols = [r[1] for r in db.execute("PRAGMA table_info(emails)").fetchall()]
+    if "followup_days" not in cols:
+        db.execute("ALTER TABLE emails ADD COLUMN followup_days INTEGER NOT NULL DEFAULT 0")
+    if "followup_sent_at" not in cols:
+        db.execute("ALTER TABLE emails ADD COLUMN followup_sent_at TEXT DEFAULT NULL")
+    db.commit()
+    db.close()
+
+
 init_db()
+migrate()
 
 
 def check_auth():
@@ -152,6 +189,54 @@ def describe_ua(ua):
     return " · ".join(labels)
 
 
+def read_settings():
+    """All key/value settings as a dict (works outside request context)."""
+    db = sqlite3.connect(DB_PATH)
+    try:
+        rows = db.execute("SELECT key, value FROM settings").fetchall()
+    except sqlite3.OperationalError:
+        rows = []
+    db.close()
+    return {k: v for k, v in rows}
+
+
+def get_setting(key, default=""):
+    s = read_settings()
+    return s.get(key, default) or default
+
+
+def set_setting(key, value):
+    db = get_db()
+    db.execute(
+        "INSERT INTO settings (key, value) VALUES (?, ?)"
+        " ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        (key, value),
+    )
+    db.commit()
+
+
+def send_telegram(text):
+    """Send a Telegram message. Returns (ok, info). Never raises."""
+    token = get_setting("tg_bot_token") or os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = get_setting("tg_chat_id") or os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        return False, "Telegram not configured"
+    try:
+        data = urllib.parse.urlencode({"chat_id": chat_id, "text": text}).encode()
+        req = urllib.request.Request(
+            "https://api.telegram.org/bot%s/sendMessage" % token, data=data, method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return (resp.status == 200), "sent" if resp.status == 200 else "http %s" % resp.status
+    except Exception as e:
+        return False, str(e)[:200]
+
+
+def client_ip():
+    fwd = request.headers.get("X-Forwarded-For", "")
+    return (fwd.split(",")[0].strip() if fwd else (request.remote_addr or ""))
+
+
 @app.route("/")
 @requires_auth
 def dashboard():
@@ -209,6 +294,21 @@ def email_detail(tid):
         }
         for o in opens
     ]
+    link_rows = []
+    for l in db.execute("SELECT * FROM links WHERE email_id = ? ORDER BY created_at", (tid,)):
+        cstats = db.execute(
+            "SELECT COUNT(*) AS c, MAX(clicked_at) AS last FROM clicks WHERE link_id = ?",
+            (l["id"],),
+        ).fetchone()
+        link_rows.append(
+            {
+                "label": l["label"],
+                "target_url": l["target_url"],
+                "track_url": url_for("click_link", lid=l["id"], _external=True),
+                "clicks": cstats["c"],
+                "last_click": fmt_time(cstats["last"]),
+            }
+        )
     return render_template(
         "email_detail.html",
         recipient=e["recipient"],
@@ -216,7 +316,120 @@ def email_detail(tid):
         created=fmt_time(e["created_at"]),
         pixel_url=url_for("pixel", tid=tid, _external=True),
         opens=rows,
+        links=link_rows,
+        followup_days=e["followup_days"] or 0,
     )
+
+
+@app.route("/c/<lid>")
+def click_link(lid):
+    target = None
+    link_row = None
+    try:
+        db = sqlite3.connect(DB_PATH)
+        db.row_factory = sqlite3.Row
+        link_row = db.execute("SELECT * FROM links WHERE id = ?", (lid,)).fetchone()
+        if link_row:
+            target = link_row["target_url"]
+            db.execute(
+                "INSERT INTO clicks (link_id, clicked_at, ip, user_agent) VALUES (?, ?, ?, ?)",
+                (lid, datetime.now(timezone.utc).isoformat(), client_ip(),
+                 request.headers.get("User-Agent", "")[:300]),
+            )
+            db.commit()
+        db.close()
+    except Exception:
+        pass
+    if link_row:
+        try:
+            email_row = None
+            db2 = sqlite3.connect(DB_PATH)
+            db2.row_factory = sqlite3.Row
+            email_row = db2.execute("SELECT * FROM emails WHERE id = ?", (link_row["email_id"],)).fetchone()
+            db2.close()
+            who = email_row["recipient"] if email_row else "?"
+            send_telegram("🔗 Link clicked\n👤 %s\n🏷️ %s\n🔗 %s" % (who, link_row["label"], link_row["target_url"]))
+        except Exception:
+            pass
+    if target:
+        return redirect(target)
+    return Response("Link not found", 404)
+
+
+@app.route("/export")
+@requires_auth
+def export_csv():
+    db = get_db()
+    out = io.StringIO()
+    w = csv.writer(out)
+    w.writerow(["recipient", "subject", "event", "time_ist", "ip", "device", "link_label", "link_url"])
+    for e in db.execute("SELECT * FROM emails ORDER BY created_at DESC"):
+        for o in db.execute("SELECT * FROM opens WHERE email_id = ? ORDER BY opened_at", (e["id"],)):
+            w.writerow([e["recipient"], e["subject"], "open", fmt_time(o["opened_at"]),
+                        o["ip"], describe_ua(o["user_agent"]), "", ""])
+        for l in db.execute("SELECT * FROM links WHERE email_id = ?", (e["id"],)):
+            for c in db.execute("SELECT * FROM clicks WHERE link_id = ? ORDER BY clicked_at", (l["id"],)):
+                w.writerow([e["recipient"], e["subject"], "click", fmt_time(c["clicked_at"]),
+                            c["ip"], describe_ua(c["user_agent"]), l["label"], l["target_url"]])
+    resp = Response(out.getvalue(), mimetype="text/csv")
+    resp.headers["Content-Disposition"] = "attachment; filename=mailtracker-export.csv"
+    return resp
+
+
+@app.route("/settings", methods=["GET", "POST"])
+@requires_auth
+def settings_page():
+    msg = None
+    if request.method == "POST":
+        set_setting("tg_bot_token", request.form.get("tg_bot_token", "").strip())
+        set_setting("tg_chat_id", request.form.get("tg_chat_id", "").strip())
+        if "test" in request.form:
+            ok, info = send_telegram("✅ MailPulse test message — notifications are working!")
+            msg = ("Test message sent!" if ok else "Failed: " + info)
+        else:
+            msg = "Settings saved."
+    cron_url = url_for("check_followups", _external=True) + "?key=" + (ADMIN_PASSWORD or "SET_A_PASSWORD_FIRST")
+    return render_template(
+        "settings.html",
+        tg_bot_token=get_setting("tg_bot_token"),
+        tg_chat_id=get_setting("tg_chat_id"),
+        msg=msg,
+        cron_url=cron_url,
+    )
+
+
+@app.route("/api/check-followups")
+def check_followups():
+    # Protected by the dashboard password as a shared key (for external cron services)
+    if not ADMIN_PASSWORD or request.args.get("key", "") != ADMIN_PASSWORD:
+        return Response("forbidden", 403)
+    now = datetime.now(timezone.utc)
+    checked, reminded = 0, 0
+    try:
+        db = sqlite3.connect(DB_PATH)
+        db.row_factory = sqlite3.Row
+        for e in db.execute(
+            "SELECT * FROM emails WHERE followup_days > 0 AND followup_sent_at IS NULL"
+        ).fetchall():
+            checked += 1
+            created = datetime.fromisoformat(e["created_at"])
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
+            opens = db.execute("SELECT COUNT(*) AS c FROM opens WHERE email_id = ?", (e["id"],)).fetchone()["c"]
+            if opens == 0 and (now - created).days >= (e["followup_days"] or 0):
+                ok, _ = send_telegram(
+                    "⏰ Follow-up: %s hasn't opened '%s' in %d days."
+                    % (e["recipient"], e["subject"] or "your mail", e["followup_days"])
+                )
+                if ok:
+                    db.execute("UPDATE emails SET followup_sent_at = ? WHERE id = ?",
+                               (now.isoformat(), e["id"]))
+                    reminded += 1
+        db.commit()
+        db.close()
+    except Exception as ex:
+        return {"ok": False, "error": str(ex)[:200]}, 500
+    return {"ok": True, "checked": checked, "reminded": reminded}
 
 
 @app.route("/new", methods=["GET", "POST"])
@@ -227,18 +440,43 @@ def new_email():
         subject = request.form.get("subject", "").strip()
         if not recipient:
             return render_template("new.html", error="Recipient is required.")
+        try:
+            followup_days = max(0, min(30, int(request.form.get("followup_days", "0") or 0)))
+        except ValueError:
+            followup_days = 0
+        links = []
+        for line in request.form.get("links", "").splitlines():
+            if "|" in line:
+                label, url = line.split("|", 1)
+                label, url = label.strip(), url.strip()
+                if url.startswith("http"):
+                    links.append((label or url, url))
         tid = uuid.uuid4().hex
         db = get_db()
         db.execute(
-            "INSERT INTO emails (id, recipient, subject, created_at) VALUES (?, ?, ?, ?)",
-            (tid, recipient, subject, datetime.now(timezone.utc).isoformat()),
+            "INSERT INTO emails (id, recipient, subject, created_at, followup_days)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (tid, recipient, subject, datetime.now(timezone.utc).isoformat(), followup_days),
         )
+        link_rows = []
+        for label, url in links:
+            lid = uuid.uuid4().hex
+            db.execute(
+                "INSERT INTO links (id, email_id, label, target_url, created_at)"
+                " VALUES (?, ?, ?, ?, ?)",
+                (lid, tid, label, url, datetime.now(timezone.utc).isoformat()),
+            )
+            link_rows.append(
+                {"label": label, "url": url, "track_url": url_for("click_link", lid=lid, _external=True)}
+            )
         db.commit()
         return render_template(
             "snippet.html",
             recipient=recipient,
             subject=subject or "—",
             pixel_url=url_for("pixel", tid=tid, _external=True),
+            links=link_rows,
+            followup_days=followup_days,
         )
     return render_template("new.html")
 
@@ -256,26 +494,45 @@ def delete_email(tid):
 def pixel(tid):
     # Allow an optional .png suffix (some mail clients like image-looking URLs)
     tid = tid[:-4] if tid.endswith(".png") else tid
+    email_row = None
+    notify = False
     try:
         db = sqlite3.connect(DB_PATH)
-        row = db.execute("SELECT id FROM emails WHERE id = ?", (tid,)).fetchone()
-        if row:
-            fwd = request.headers.get("X-Forwarded-For", "")
-            ip = (fwd.split(",")[0].strip() if fwd else (request.remote_addr or ""))
+        db.row_factory = sqlite3.Row
+        email_row = db.execute("SELECT * FROM emails WHERE id = ?", (tid,)).fetchone()
+        if email_row:
+            last = db.execute(
+                "SELECT MAX(opened_at) AS m, COUNT(*) AS c FROM opens WHERE email_id = ?",
+                (tid,),
+            ).fetchone()
+            ua = request.headers.get("User-Agent", "")[:300]
             db.execute(
                 "INSERT INTO opens (email_id, opened_at, ip, user_agent)"
                 " VALUES (?, ?, ?, ?)",
-                (
-                    tid,
-                    datetime.now(timezone.utc).isoformat(),
-                    ip,
-                    request.headers.get("User-Agent", "")[:300],
-                ),
+                (tid, datetime.now(timezone.utc).isoformat(), client_ip(), ua),
             )
             db.commit()
+            # Notify on first open, or if the previous open was >5 min ago (debounce)
+            notify = True
+            if last["m"]:
+                last_dt = datetime.fromisoformat(last["m"])
+                if last_dt.tzinfo is None:
+                    last_dt = last_dt.replace(tzinfo=timezone.utc)
+                gap = (datetime.now(timezone.utc) - last_dt).total_seconds()
+                notify = gap > 300
+            open_no = (last["c"] or 0) + 1
         db.close()
     except Exception:
         pass  # never break the pixel response
+    if email_row and notify:
+        try:
+            subj = email_row["subject"] or "no subject"
+            send_telegram(
+                "📬 Mail opened #%d\n👤 %s\n✉️ %s\n🕒 %s"
+                % (open_no, email_row["recipient"], subj, fmt_time(datetime.now(timezone.utc).isoformat()))
+            )
+        except Exception:
+            pass
     resp = Response(PIXEL_PNG, mimetype="image/png")
     resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     resp.headers["Pragma"] = "no-cache"
