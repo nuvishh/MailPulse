@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="520" viewBox="0 0 1280 520" font-family="-apple-system, 'Segoe UI', Inter, Roboto, sans-serif">
+  <rect width="1280" height="520" fill="#0b1117"/>
+  <text x="640" y="80" font-size="30" font-weight="800" fill="#e6edf3" text-anchor="middle">How <tspan fill="#00d4a4">MailPulse</tspan> works</text>
+
+  <!-- step 1 -->
+  <g>
+    <rect x="50" y="120" width="260" height="280" rx="16" fill="#111a28" stroke="#223047"/>
+    <circle cx="180" cy="120" r="14" fill="#00d4a4"/>
+    <text x="180" y="125" font-size="13" font-weight="800" fill="#06281e" text-anchor="middle">1</text>
+    <text x="180" y="200" font-size="40" text-anchor="middle">📝</text>
+    <text x="180" y="245" font-size="16" font-weight="700" fill="#e6edf3" text-anchor="middle">Create tracked email</text>
+    <text x="180" y="270" font-size="13" fill="#8b98ad" text-anchor="middle">Enter recipient + subject</text>
+    <text x="180" y="288" font-size="13" fill="#8b98ad" text-anchor="middle">on the dashboard</text>
+    <rect x="100" y="310" width="160" height="26" rx="6" fill="#0b1117" stroke="#223047"/>
+    <text x="180" y="328" font-size="11" fill="#4da3ff" text-anchor="middle" font-family="monospace">pixel.png?id=abc123</text>
+  </g>
+  <text x="325" y="270" font-size="28" fill="#00d4a4">→</text>
+
+  <!-- step 2 -->
+  <g>
+    <rect x="340" y="120" width="260" height="280" rx="16" fill="#111a28" stroke="#223047"/>
+    <circle cx="470" cy="120" r="14" fill="#00d4a4"/>
+    <text x="470" y="125" font-size="13" font-weight="800" fill="#06281e" text-anchor="middle">2</text>
+    <text x="470" y="200" font-size="40" text-anchor="middle">📧</text>
+    <text x="470" y="245" font-size="16" font-weight="700" fill="#e6edf3" text-anchor="middle">Paste into Gmail</text>
+    <text x="470" y="270" font-size="13" fill="#8b98ad" text-anchor="middle">Insert → Web address → paste</text>
+    <text x="470" y="288" font-size="13" fill="#8b98ad" text-anchor="middle">the pixel URL as an image</text>
+    <rect x="390" y="310" width="160" height="26" rx="6" fill="#0b1117" stroke="#223047"/>
+    <text x="470" y="328" font-size="11" fill="#4da3ff" text-anchor="middle" font-family="monospace">&lt;img&gt; 1×1 invisible</text>
+  </g>
+  <text x="615" y="270" font-size="28" fill="#00d4a4">→</text>
+
+  <!-- step 3 -->
+  <g>
+    <rect x="630" y="120" width="260" height="280" rx="16" fill="#111a28" stroke="#223047"/>
+    <circle cx="760" cy="120" r="14" fill="#00d4a4"/>
+    <text x="760" y="125" font-size="13" font-weight="800" fill="#06281e" text-anchor="middle">3</text>
+    <text x="760" y="200" font-size="40" text-anchor="middle">👁️</text>
+    <text x="760" y="245" font-size="16" font-weight="700" fill="#e6edf3" text-anchor="middle">Recipient opens</text>
+    <text x="760" y="270" font-size="13" fill="#8b98ad" text-anchor="middle">Their mail app loads the pixel —</text>
+    <text x="760" y="288" font-size="13" fill="#8b98ad" text-anchor="middle">open logged: time, IP, device</text>
+    <rect x="680" y="310" width="160" height="26" rx="6" fill="#0b1117" stroke="#223047"/>
+    <text x="760" y="328" font-size="11" fill="#4da3ff" text-anchor="middle" font-family="monospace">200 OK · logged</text>
+  </g>
+  <text x="905" y="270" font-size="28" fill="#00d4a4">→</text>
+
+  <!-- step 4 -->
+  <g>
+    <rect x="920" y="120" width="260" height="280" rx="16" fill="#111a28" stroke="#223047"/>
+    <circle cx="1050" cy="120" r="14" fill="#00d4a4"/>
+    <text x="1050" y="125" font-size="13" font-weight="800" fill="#06281e" text-anchor="middle">4</text>
+    <text x="1050" y="200" font-size="40" text-anchor="middle">🔔</text>
+    <text x="1050" y="245" font-size="16" font-weight="700" fill="#e6edf3" text-anchor="middle">Instant alert</text>
+    <text x="1050" y="270" font-size="13" fill="#8b98ad" text-anchor="middle">Telegram pings you the second</text>
+    <text x="1050" y="288" font-size="13" fill="#8b98ad" text-anchor="middle">it happens — plus dashboard stats</text>
+    <rect x="970" y="310" width="160" height="26" rx="6" fill="#0b1117" stroke="#223047"/>
+    <text x="1050" y="328" font-size="11" fill="#4da3ff" text-anchor="middle" font-family="monospace">⚡ real-time</text>
+  </g>
+
+  <text x="640" y="460" font-size="14" fill="#5c6b82" text-anchor="middle">No branding · No signature · <tspan fill="#00d4a4" font-weight="700">Your server, your data</tspan></text>
+</svg>

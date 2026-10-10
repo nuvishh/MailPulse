@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" font-family="-apple-system, 'Segoe UI', Inter, Roboto, sans-serif">
+  <rect width="1280" height="800" fill="#0b1117"/>
+  <!-- topbar -->
+  <rect width="1280" height="68" fill="#0d141d"/>
+  <line x1="0" y1="68" x2="1280" y2="68" stroke="#1c2634"/>
+  <text x="32" y="43" font-size="22" font-weight="800" fill="#e6edf3">📬 Mail<tspan fill="#00d4a4">Pulse</tspan></text>
+  <g font-size="13" fill="#c9d4e3">
+    <rect x="952" y="18" width="86" height="32" rx="16" fill="#161e29" stroke="#2a3648"/>
+    <text x="995" y="39" text-anchor="middle">🌙 Dark</text>
+    <rect x="1046" y="18" width="96" height="32" rx="16" fill="#161e29" stroke="#2a3648"/>
+    <text x="1094" y="39" text-anchor="middle">⚙️ Settings</text>
+    <rect x="1150" y="18" width="150" height="32" rx="16" fill="#161e29" stroke="#2a3648"/>
+    <text x="1225" y="39" text-anchor="middle">＋ New tracked email</text>
+  </g>
+  <!-- stats -->
+  <g>
+    <rect x="32" y="96" width="288" height="110" rx="14" fill="#131c29" stroke="#223047"/>
+    <text x="54" y="126" font-size="12" fill="#8b98ad" letter-spacing="1">TRACKED EMAILS</text>
+    <text x="54" y="168" font-size="34" font-weight="800" fill="#e6edf3">12</text>
+    <rect x="336" y="96" width="288" height="110" rx="14" fill="#131c29" stroke="#223047"/>
+    <text x="358" y="126" font-size="12" fill="#8b98ad" letter-spacing="1">OPENED</text>
+    <text x="358" y="168" font-size="34" font-weight="800" fill="#00d4a4">9</text>
+    <rect x="640" y="96" width="288" height="110" rx="14" fill="#131c29" stroke="#223047"/>
+    <text x="662" y="126" font-size="12" fill="#8b98ad" letter-spacing="1">OPEN RATE</text>
+    <text x="662" y="168" font-size="34" font-weight="800" fill="#4da3ff">75%</text>
+    <rect x="944" y="96" width="304" height="110" rx="14" fill="#131c29" stroke="#223047"/>
+    <text x="966" y="126" font-size="12" fill="#8b98ad" letter-spacing="1">LINK CLICKS</text>
+    <text x="966" y="168" font-size="34" font-weight="800" fill="#ffb224">23</text>
+  </g>
+  <!-- toolbar -->
+  <rect x="32" y="230" width="880" height="44" rx="10" fill="#131c29" stroke="#223047"/>
+  <text x="52" y="257" font-size="14" fill="#8b98ad">🔍 Search recipient or subject…</text>
+  <rect x="928" y="230" width="64" height="44" rx="22" fill="#00d4a4"/>
+  <text x="960" y="257" font-size="13" font-weight="700" fill="#06281e" text-anchor="middle">All</text>
+  <rect x="1000" y="230" width="110" height="44" rx="22" fill="#131c29" stroke="#223047"/>
+  <text x="1055" y="257" font-size="13" font-weight="600" fill="#8b98ad" text-anchor="middle">Opened</text>
+  <rect x="1118" y="230" width="130" height="44" rx="22" fill="#131c29" stroke="#223047"/>
+  <text x="1183" y="257" font-size="13" font-weight="600" fill="#8b98ad" text-anchor="middle">Unopened</text>
+  <!-- table header -->
+  <g font-size="11" fill="#5c6b82" letter-spacing="1">
+    <text x="48" y="310">RECIPIENT</text>
+    <text x="560" y="310">STATUS</text>
+    <text x="800" y="310">OPENS</text>
+    <text x="960" y="310">LAST OPENED</text>
+  </g>
+  <line x1="32" y1="324" x2="1248" y2="324" stroke="#1c2634"/>
+  <!-- row 1 -->
+  <text x="48" y="360" font-size="14" font-weight="700" fill="#e6edf3">sarah@techcorp.io</text>
+  <text x="48" y="380" font-size="13" fill="#8b98ad">Application — Flutter Developer</text>
+  <rect x="560" y="342" width="92" height="28" rx="14" fill="#00d4a4" opacity="0.14"/>
+  <text x="606" y="361" font-size="12" font-weight="700" fill="#00d4a4" text-anchor="middle">● Opened</text>
+  <text x="800" y="362" font-size="14" font-weight="700" fill="#4da3ff">4</text>
+  <text x="960" y="362" font-size="13" fill="#8b98ad">2 hours ago · 📱 iPhone</text>
+  <line x1="32" y1="398" x2="1248" y2="398" stroke="#141c29"/>
+  <!-- row 2 -->
+  <text x="48" y="434" font-size="14" font-weight="700" fill="#e6edf3">hiring@startup.co</text>
+  <text x="48" y="454" font-size="13" fill="#8b98ad">Re: Product Engineer role</text>
+  <rect x="560" y="416" width="92" height="28" rx="14" fill="#00d4a4" opacity="0.14"/>
+  <text x="606" y="435" font-size="12" font-weight="700" fill="#00d4a4" text-anchor="middle">● Opened</text>
+  <text x="800" y="436" font-size="14" font-weight="700" fill="#4da3ff">2</text>
+  <text x="960" y="436" font-size="13" fill="#8b98ad">Yesterday · 💻 Chrome / Windows</text>
+  <line x1="32" y1="472" x2="1248" y2="472" stroke="#141c29"/>
+  <!-- row 3 -->
+  <text x="48" y="508" font-size="14" font-weight="700" fill="#e6edf3">alex@designstudio.com</text>
+  <text x="48" y="528" font-size="13" fill="#8b98ad">Freelance proposal</text>
+  <rect x="560" y="490" width="104" height="28" rx="14" fill="#ffb224" opacity="0.12"/>
+  <text x="612" y="509" font-size="12" font-weight="700" fill="#ffb224" text-anchor="middle">● Unopened</text>
+  <text x="800" y="510" font-size="14" font-weight="700" fill="#4da3ff">0</text>
+  <text x="960" y="510" font-size="13" fill="#8b98ad">— · ⏰ reminder in 2d</text>
+  <line x1="32" y1="546" x2="1248" y2="546" stroke="#141c29"/>
+  <!-- row 4 -->
+  <text x="48" y="582" font-size="14" font-weight="700" fill="#e6edf3">team@agency.io</text>
+  <text x="48" y="602" font-size="13" fill="#8b98ad">Partnership inquiry</text>
+  <rect x="560" y="564" width="92" height="28" rx="14" fill="#00d4a4" opacity="0.14"/>
+  <text x="606" y="583" font-size="12" font-weight="700" fill="#00d4a4" text-anchor="middle">● Opened</text>
+  <text x="800" y="584" font-size="14" font-weight="700" fill="#4da3ff">7</text>
+  <text x="960" y="584" font-size="13" fill="#8b98ad">3 days ago · 💻 Safari / macOS</text>
+  <line x1="32" y1="620" x2="1248" y2="620" stroke="#141c29"/>
+  <!-- footer -->
+  <line x1="0" y1="740" x2="1280" y2="740" stroke="#1c2634"/>
+  <text x="32" y="770" font-size="12" fill="#5c6b82">🔔 Telegram alerts on · ⏰ follow-ups armed</text>
+  <text x="1248" y="770" font-size="12" fill="#5c6b82" text-anchor="end">your server · your data</text>
+</svg>

@@ -3,7 +3,7 @@
 
 A self-hosted email open tracker: create a tracked email on the dashboard, get a unique tracking-pixel image URL, paste it into your Gmail, and see opens the second they happen. **No branding, no "sent with" signature, no third party — your server, your data.**
 
-![MailPulse dashboard](docs/dashboard.png)
+![MailPulse dashboard](docs/dashboard.svg)
 
 ## ✨ Features
 
@@ -18,7 +18,7 @@ A self-hosted email open tracker: create a tracked email on the dashboard, get a
 
 ## 🛠️ How it works
 
-![How MailPulse works](docs/how-it-works.png)
+![How MailPulse works](docs/how-it-works.svg)
 
 1. You create a tracked email on the dashboard (recipient + subject).
 2. You get a unique 1×1 invisible tracking-pixel image URL.
