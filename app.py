@@ -20,6 +20,7 @@ Routes:
 
 import base64
 import csv
+import html
 import io
 import os
 import sqlite3
@@ -222,7 +223,9 @@ def send_telegram(text):
     if not token or not chat_id:
         return False, "Telegram not configured"
     try:
-        data = urllib.parse.urlencode({"chat_id": chat_id, "text": text}).encode()
+        data = urllib.parse.urlencode(
+            {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
+        ).encode()
         req = urllib.request.Request(
             "https://api.telegram.org/bot%s/sendMessage" % token, data=data, method="POST"
         )
@@ -348,7 +351,22 @@ def click_link(lid):
             email_row = db2.execute("SELECT * FROM emails WHERE id = ?", (link_row["email_id"],)).fetchone()
             db2.close()
             who = email_row["recipient"] if email_row else "?"
-            send_telegram("🔗 Link clicked\n👤 %s\n🏷️ %s\n🔗 %s" % (who, link_row["label"], link_row["target_url"]))
+            subj = email_row["subject"] if email_row and email_row["subject"] else "no subject"
+            send_telegram(
+                "🔗 <b>Link Clicked</b>\n\n"
+                "<b>To:</b> %s\n"
+                "<b>Subject:</b> %s\n"
+                "<b>Link:</b> %s\n"
+                "<b>URL:</b> %s\n"
+                "<b>Time:</b> %s IST"
+                % (
+                    html.escape(who),
+                    html.escape(subj),
+                    html.escape(link_row["label"]),
+                    html.escape(link_row["target_url"]),
+                    fmt_time(datetime.now(timezone.utc).isoformat()),
+                )
+            )
         except Exception:
             pass
     if target:
@@ -384,11 +402,15 @@ def settings_page():
         set_setting("tg_bot_token", request.form.get("tg_bot_token", "").strip())
         set_setting("tg_chat_id", request.form.get("tg_chat_id", "").strip())
         if "test" in request.form:
-            ok, info = send_telegram("✅ MailPulse test message — notifications are working!")
+            ok, info = send_telegram(
+                "✅ <b>MailPulse Test</b>\n\n"
+                "Notifications are working! You'll get alerts here for opens, clicks &amp; follow-ups."
+            )
             msg = ("Test message sent!" if ok else "Failed: " + info)
         else:
             msg = "Settings saved."
-    cron_url = url_for("check_followups", _external=True) + "?key=" + (ADMIN_PASSWORD or "SET_A_PASSWORD_FIRST")
+    cron_key = urllib.parse.quote(ADMIN_PASSWORD, safe="") if ADMIN_PASSWORD else "SET_A_PASSWORD_FIRST"
+    cron_url = url_for("check_followups", _external=True) + "?key=" + cron_key
     return render_template(
         "settings.html",
         tg_bot_token=get_setting("tg_bot_token"),
@@ -418,8 +440,16 @@ def check_followups():
             opens = db.execute("SELECT COUNT(*) AS c FROM opens WHERE email_id = ?", (e["id"],)).fetchone()["c"]
             if opens == 0 and (now - created).days >= (e["followup_days"] or 0):
                 ok, _ = send_telegram(
-                    "⏰ Follow-up: %s hasn't opened '%s' in %d days."
-                    % (e["recipient"], e["subject"] or "your mail", e["followup_days"])
+                    "⏰ <b>Follow-up Reminder</b>\n\n"
+                    "<b>To:</b> %s\n"
+                    "<b>Subject:</b> %s\n"
+                    "<b>Status:</b> Not opened in %d days\n"
+                    "💡 Consider sending a follow-up mail."
+                    % (
+                        html.escape(e["recipient"]),
+                        html.escape(e["subject"] or "no subject"),
+                        e["followup_days"],
+                    )
                 )
                 if ok:
                     db.execute("UPDATE emails SET followup_sent_at = ? WHERE id = ?",
@@ -527,9 +557,21 @@ def pixel(tid):
     if email_row and notify:
         try:
             subj = email_row["subject"] or "no subject"
+            device = describe_ua(request.headers.get("User-Agent", ""))
             send_telegram(
-                "📬 Mail opened #%d\n👤 %s\n✉️ %s\n🕒 %s"
-                % (open_no, email_row["recipient"], subj, fmt_time(datetime.now(timezone.utc).isoformat()))
+                "📬 <b>Mail Opened</b>\n\n"
+                "<b>To:</b> %s\n"
+                "<b>Subject:</b> %s\n"
+                "<b>Opens so far:</b> %d\n"
+                "<b>Device:</b> %s\n"
+                "<b>Time:</b> %s IST"
+                % (
+                    html.escape(email_row["recipient"]),
+                    html.escape(subj),
+                    open_no,
+                    html.escape(device),
+                    fmt_time(datetime.now(timezone.utc).isoformat()),
+                )
             )
         except Exception:
             pass
